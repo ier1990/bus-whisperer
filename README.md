@@ -33,7 +33,7 @@ One pin can:
 - Identify unknown pins on ECUs or drives
 - Map board pinout behavior, one bit at a time
 
-Multiply that by 16 — and you have a system ABI wished they had built.
+Multiply that by 16 — and you have a system that can do everything from: 
 
 ---
 
