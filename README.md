@@ -12,6 +12,29 @@
 
 ---
 
+## 🔋 The Power of a Single Pin
+
+One pin on the Bus Whisperer isn't just a wire.
+
+It's a:
+- Logic signal generator
+- Analog voltage sniffer
+- Pull-up or pull-down source
+- Pulse injector
+- Edge detector
+- Fault simulator
+- Gate poking wand
+- In-circuit truth table stimulator
+
+One pin can:
+- Backdrive an IC safely
+- Detect floating or stuck inputs
+- Pulse triggers, resets, clocks
+- Identify unknown pins on ECUs or drives
+- Map board pinout behavior, one bit at a time
+
+Multiply that by 16 — and you have a system ABI wished they had built.
+
 ---
 
 ## 🧠 How One Pin Works
