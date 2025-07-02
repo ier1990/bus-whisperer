@@ -34,7 +34,7 @@
 ## 🤝 Contribute
 
 Found it useful? Fork it, break it, fix it — and whisper back:
-**[github.com/YOURNAME/bus-whisperer](https://github.com/YOURNAME/bus-whisperer)**
+**[github.com/ier1990/bus-whisperer](https://github.com/YOURNAME/bus-whisperer)**
 
 ---
 
