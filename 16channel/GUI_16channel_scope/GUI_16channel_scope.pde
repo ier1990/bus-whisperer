@@ -77,8 +77,9 @@ void setup() {
 void draw() {
   background(0);
   drawHeader();
-  drawScope();
+  //drawScope();
   drawTerminal();
+  drawICSocket();
 }
 
 void drawHeader() {
@@ -140,6 +141,43 @@ void SelectPort(int index) {
 
 
 
+void drawICSocket() {
+  int centerX = width / 2;
+  int centerY = height / 2;
+  int pinSpacing = 20;
+  int pinRadius = 10;
+
+  fill(50);
+  rect(centerX - 30, centerY - 100, 60, 200);  // IC body
+
+  // Draw left side pins (1–8)
+  for (int i = 0; i < 8; i++) {
+    int py = centerY - 90 + i * pinSpacing;
+    fill(0, 255, 0);
+    ellipse(centerX - 40, py, pinRadius, pinRadius);  // pin circle
+    fill(255);
+    textAlign(CENTER, CENTER);
+    text(i + 1, centerX - 60, py);  // pin label
+
+    // Draw left scope trace
+    stroke(0, 255, 0);
+    line(centerX - 40, py, 10, py);  // trace line
+  }
+
+  // Draw right side pins (9–16)
+  for (int i = 0; i < 8; i++) {
+    int py = centerY - 90 + i * pinSpacing;
+    fill(0, 255, 0);
+    ellipse(centerX + 40, py, pinRadius, pinRadius);
+    fill(255);
+    textAlign(CENTER, CENTER);
+    text(i + 9, centerX + 60, py);
+
+    // Draw right scope trace
+    stroke(0, 255, 0);
+    line(centerX + 40, py, width - 10, py);
+  }
+}
 
 
 
@@ -199,5 +237,45 @@ void controlEvent(ControlEvent theEvent) {
         println(">> " + input); // local echo
       }
     }
+  }
+}
+
+
+
+
+
+
+
+
+void mousePressed() {
+  int centerX = width / 2;
+  int centerY = height / 2;
+  int pinSpacing = 20;
+  int pinRadius = 10;
+
+  for (int i = 0; i < 8; i++) {
+    int py = centerY - 90 + i * pinSpacing;
+
+    // Left side (pins 1–8)
+    if (dist(mouseX, mouseY, centerX - 40, py) < pinRadius) {
+      handlePinClick(i + 1);
+      return;
+    }
+
+    // Right side (pins 9–16)
+    if (dist(mouseX, mouseY, centerX + 40, py) < pinRadius) {
+      handlePinClick(i + 9);
+      return;
+    }
+  }
+}
+
+void handlePinClick(int pin) {
+  if (mouseButton == LEFT) {
+    println("Blink pin " + pin);
+    if (myPort != null) myPort.write("/WB" + (pin - 1) + "\n");
+  } else if (mouseButton == RIGHT) {
+    println("Show dropdown for pin " + pin);
+    // You can integrate ControlP5's dropdown or make a custom one
   }
 }
