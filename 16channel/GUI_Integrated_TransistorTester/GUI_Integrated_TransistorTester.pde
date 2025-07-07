@@ -5,6 +5,10 @@ import controlP5.*;
 Serial myPort;
 String[] ports;
 
+int[][] analogData = new int[16][200];  // buffer
+// 16-channel analog buffer
+int[][] data = new int[16][200];  // 16 channels, 200 samples each
+
 ArrayList<String> terminalLines = new ArrayList<String>();
 String serialBuffer = "";
 String lastTransistorResult = "";
@@ -12,11 +16,14 @@ String lastTransistorResult = "";
 ControlP5 cp5;
 Textfield commandField;
 
+float thresholdLow = 200;
+float thresholdHigh = 410;
+
 int centerY;
 int centerX;
 
 void setup() {
-  size(1000, 600);
+  size(800, 600);
   cp5 = new ControlP5(this);
 
   centerY = height / 2;
@@ -85,10 +92,14 @@ void draw() {
   textAlign(LEFT, TOP);
   text("Expandable Top Menu GUI", 10, 5);
 
+  
   drawICSocket();
+  drawScope();
   drawTerminal();
   drawTransistorSocket(centerX - 50, 100);
   drawPinHighlightLines();  // Optional pin link lines
+  
+  
 }
 
 void drawTerminal() {  
@@ -117,6 +128,86 @@ void Command(String command) {
   }
 }
 
+
+
+
+
+void drawScope() {
+  int pinSpacing = 30;
+  int scopeHeight = 18;
+
+  for (int ch = 0; ch < 16; ch++) {
+    int py = centerY - 116 + (ch % 8) * pinSpacing;
+
+    for (int i = data[ch].length - 2; i >= 0; i--) {
+      int val1 = data[ch][i];
+      int val2 = data[ch][i + 1];
+
+      float y1 = py - map(val1, 0, 1023, -scopeHeight, scopeHeight);
+      float y2 = py - map(val2, 0, 1023, -scopeHeight, scopeHeight);
+
+      float x1, x2;
+
+      if (ch < 8) {
+        x1 = centerX - 40 - (data[ch].length - 1 - i);
+        x2 = centerX - 40 - (data[ch].length - 2 - i);
+      } else {
+        x1 = centerX + 40 + (data[ch].length - 1 - i);
+        x2 = centerX + 40 + (data[ch].length - 2 - i);
+      }
+
+      // Set color for first value in the segment
+      if (val1 < thresholdLow) stroke(0, 255, 0); // Green
+      else if (val1 > thresholdHigh) stroke(255, 0, 0); // Red
+      else stroke(0, 255, 255);
+
+      line(x1, y1, x2, y2);
+    }
+  }
+}
+
+
+
+
+void drawScope1() {  //master it works
+  int pinSpacing = 30;
+  
+  int scopeHeight = 18;
+
+  for (int ch = 0; ch < 16; ch++) {
+    int py = centerY - 116 + (ch % 8) * pinSpacing;
+
+    noFill();
+    //stroke(0, 255, 255);
+    beginShape();
+
+    for (int i = data[ch].length - 1; i >= 0; i--) {
+      float signal = map(data[ch][i], 0, 1023, -scopeHeight, scopeHeight);
+      float y = py - signal;
+      
+           // Determine stroke color based on thresholds
+      if (data[ch][i] < thresholdLow) stroke(0, 255, 0);
+      else if (data[ch][i] > thresholdHigh) stroke(255, 0, 0);
+      else stroke(0, 255, 255);
+      
+      
+
+      // LEFT side (pins 1–8)
+      if (ch < 8) {
+        float x = centerX - 40 - (data[ch].length - 1 - i);  // draw leftward from pin
+        vertex(x, y);
+      }
+      // RIGHT side (pins 9–16)
+      else {
+        float x = centerX + 40 + (data[ch].length - 1 - i);  // draw rightward from pin
+        vertex(x, y);
+      }
+    }
+
+    endShape();
+  }
+}
+
 void drawTransistorSocket(int x, int y) {
   int padSpacing = 40;
   fill(120);
@@ -131,12 +222,7 @@ void drawTransistorSocket(int x, int y) {
   fill(255);
   text("Transistor Test (Pins 1–3)", x + padSpacing, y - 25);
   textSize(12);
-  text(lastTransistorResult, x + padSpacing, y + 30);
-}
-
-void TEST3() {
-  println("Testing transistor...");
-  if (myPort != null) myPort.write("/TEST3\n");
+  //text(lastTransistorResult, x + padSpacing, y + 30);
 }
 
 void drawICSocket() {
@@ -154,7 +240,7 @@ void drawICSocket() {
     textAlign(CENTER, CENTER);
     text(i + 1, centerX - 70, py);
     stroke(0, 255, 0);
-    line(centerX - 40, py, 10, py);
+    //line(centerX - 40, py, 10, py);
   }
 
   for (int i = 0; i < 8; i++) {
@@ -165,7 +251,7 @@ void drawICSocket() {
     textAlign(CENTER, CENTER);
     text(i + 9, centerX + 70, py);
     stroke(0, 255, 0);
-    line(centerX + 40, py, width - 10, py);
+    //line(centerX + 40, py, width - 10, py);
   }
 }
 
@@ -204,9 +290,12 @@ void handlePinClick(int pin) {
 }
 
 void serialEvent(Serial p) {
+  
+  
   String input = p.readStringUntil('\n');
   if (input != null) {
     serialBuffer += input.trim();
+    
 
     int start = serialBuffer.indexOf("<P>");
     int end = serialBuffer.indexOf("</P>");
@@ -219,6 +308,27 @@ void serialEvent(Serial p) {
       start = serialBuffer.indexOf("<P>");
       end = serialBuffer.indexOf("</P>");
     }
+    
+  // Parse <A>...</A> tags
+  int startA = serialBuffer.indexOf("<A>");
+  int endA = serialBuffer.indexOf("</A>");
+  while (startA >= 0 && endA > startA) {
+    String packet = serialBuffer.substring(startA + 3, endA);  // extract CSV inside <A>
+    String[] tokens = split(packet, ',');
+  
+    if (tokens.length == 16) {
+      for (int i = 0; i < 16; i++) {
+        int val = int(tokens[i]);
+        arrayCopy(data[i], 1, data[i], 0, data[i].length - 1);
+        data[i][data[i].length - 1] = val;
+      }
+    }
+  
+    // Remove the processed <A>...</A> from the buffer
+    serialBuffer = serialBuffer.substring(0, startA) + serialBuffer.substring(endA + 4);
+    startA = serialBuffer.indexOf("<A>");
+    endA = serialBuffer.indexOf("</A>");
+  }  
 
     if (serialBuffer.length() > 200) {
       serialBuffer = "";
@@ -226,11 +336,14 @@ void serialEvent(Serial p) {
   }
 }
 
+
+
+
 void controlEvent(ControlEvent e) {
   if (e.isFrom("SelectPort")) {
     int index = int(e.getValue());
     println("Selected port: " + ports[index]);
-    // myPort = new Serial(this, ports[index], 9600);
+    myPort = new Serial(this, ports[index], 115200);
   }
 }
 
