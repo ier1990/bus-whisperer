@@ -9,6 +9,28 @@ int[][] analogData = new int[16][200];  // buffer
 // 16-channel analog buffer
 int[][] data = new int[16][200];  // 16 channels, 200 samples each
 
+// Index 0 = pin 1, Index 15 = pin 16
+int[] pinMap = {
+  2, 3, 4, 5, 6, 7, 8, 9,   // Pins 1–8
+  19, 18, 17, 16, 15, 14, 11, 10  // Pins 9–16
+};
+
+// Index 0 = pin 1, Index 15 = pin 16
+int[] pinMap10k = {
+  22, 24, 26, 28, 30, 32, 34, 36,   // Pins 1–8
+  52, 50, 48, 46, 44, 42, 40, 38  // Pins 9–16
+};
+
+
+boolean showContextMenu = false;
+int contextPin = -1;
+int contextX, contextY;
+String[] menuOptions = { "Blink 160Ω", "Pulse High", "Set as Input", "Set as Output", "Label as..." };
+
+
+
+
+
 ArrayList<String> terminalLines = new ArrayList<String>();
 String serialBuffer = "";
 String lastTransistorResult = "";
@@ -99,7 +121,20 @@ void draw() {
   drawTransistorSocket(centerX - 50, 100);
   drawPinHighlightLines();  // Optional pin link lines
   
-  
+ if (showContextMenu && contextPin > 0) {
+  fill(30);
+  stroke(200);
+  int menuWidth = 120;
+  int lineHeight = 20;
+
+  for (int i = 0; i < menuOptions.length; i++) {
+    rect(contextX, contextY + i * lineHeight, menuWidth, lineHeight);
+    fill(255);
+    textAlign(LEFT, CENTER);
+    text(menuOptions[i], contextX + 5, contextY + i * lineHeight + lineHeight / 2);
+    fill(30);
+  }
+} 
 }
 
 void drawTerminal() {  
@@ -134,7 +169,7 @@ void Command(String command) {
 
 void drawScope() {
   int pinSpacing = 30;
-  int scopeHeight = 18;
+  int scopeHeight = 15;
 
   for (int ch = 0; ch < 16; ch++) {
     int py = centerY - 116 + (ch % 8) * pinSpacing;
@@ -157,9 +192,9 @@ void drawScope() {
       }
 
       // Set color for first value in the segment
-      if (val1 < thresholdLow) stroke(0, 255, 0); // Green
-      else if (val1 > thresholdHigh) stroke(255, 0, 0); // Red
-      else stroke(0, 255, 255);
+      if (val2 < thresholdLow) stroke(0, 255, 0); // Green
+      else if (val2 > thresholdHigh) stroke(255, 0, 0); // Red
+      else stroke(255); // White
 
       line(x1, y1, x2, y2);
     }
@@ -249,7 +284,7 @@ void drawICSocket() {
     ellipse(centerX + 40, py, pinRadius, pinRadius);
     fill(255);
     textAlign(CENTER, CENTER);
-    text(i + 9, centerX + 70, py);
+    text(16 - i, centerX + 70, py);
     stroke(0, 255, 0);
     //line(centerX + 40, py, width - 10, py);
   }
@@ -273,21 +308,69 @@ void mousePressed() {
       return;
     }
     if (dist(mouseX, mouseY, centerX + 40, py) < pinRadius) {
-      handlePinClick(i + 9);
+      handlePinClick(16 - i);
       return;
     }
   }
+  
+  
+  
+  
+  
+  
+  
+if (showContextMenu && mouseButton == LEFT) {
+  int menuWidth = 120;
+  int lineHeight = 20;
+
+  for (int i = 0; i < menuOptions.length; i++) {
+    int mx = contextX;
+    int my = contextY + i * lineHeight;
+    if (mouseX >= mx && mouseX <= mx + menuWidth &&
+        mouseY >= my && mouseY <= my + lineHeight) {
+
+      // Execute based on menuOptions[i]
+      println("Action: " + menuOptions[i] + " on pin " + contextPin);
+
+      if (menuOptions[i].equals("Blink")) {
+        if (myPort != null) myPort.write("/wb" + pinMap[contextPin - 1] + "\n");
+      }
+
+      // TODO: handle other cases...
+
+      showContextMenu = false;  // hide after click
+      break;
+    }
+  }  
+}
+  
+  
+if (mouseButton == RIGHT && showContextMenu) {
+  showContextMenu = false;
+}
+  
+  
+  
 }
 
 void handlePinClick(int pin) {
+  if (pin < 1 || pin > 16) return;
+
+  int real_pin = pinMap10k[pin - 1];  // adjust for 0-based index
+
   if (mouseButton == LEFT) {
-    println("Blink pin " + pin);
-    if (myPort != null) myPort.write("/WB" + (pin - 1) + "\n");
+    println("Blink pin " + pin + " → Arduino D" + real_pin);
+    if (myPort != null) myPort.write("/wb" + real_pin + "\n");
   } else if (mouseButton == RIGHT) {
-    println("Right click - show menu for pin " + pin);
-    // Add dropdown logic here later
+    println("Right click - pin " + pin + " → Arduino D" + real_pin);
+    contextPin = pin;
+    contextX = mouseX;
+    contextY = mouseY;
+    showContextMenu = true;    
+    // dropdown here
   }
 }
+
 
 void serialEvent(Serial p) {
   
@@ -349,4 +432,5 @@ void controlEvent(ControlEvent e) {
 
 void ResetAll() {
   println("Reset triggered!");
+  if (myPort != null) myPort.write("/reset" + "\n");  
 }
