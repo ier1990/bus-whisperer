@@ -13,12 +13,14 @@ int[][] data = new int[16][200];  // 16 channels, 200 samples each
 int[] pinMap = {
   2, 3, 4, 5, 6, 7, 8, 9,   // Pins 1–8
   19, 18, 17, 16, 15, 14, 11, 10  // Pins 9–16
+  //10, 11, 14, 15, 16, 17, 18, 19  // Pins 9–16
 };
 
 // Index 0 = pin 1, Index 15 = pin 16
 int[] pinMap10k = {
   22, 24, 26, 28, 30, 32, 34, 36,   // Pins 1–8
   52, 50, 48, 46, 44, 42, 40, 38  // Pins 9–16
+  //38, 40, 42, 44, 46, 48, 50, 52  // Pins 9–16  
 };
 
 
@@ -187,6 +189,13 @@ void drawScope() {
         x1 = centerX - 40 - (data[ch].length - 1 - i);
         x2 = centerX - 40 - (data[ch].length - 2 - i);
       } else {
+        int flippedCh = 8 + (7 - (ch - 8));  // flip channels 8–15
+        val1 = data[flippedCh][i];
+        val2 = data[flippedCh][i + 1];
+      
+        y1 = py - map(val1, 0, 1023, -scopeHeight, scopeHeight);
+        y2 = py - map(val2, 0, 1023, -scopeHeight, scopeHeight);
+      
         x1 = centerX + 40 + (data[ch].length - 1 - i);
         x2 = centerX + 40 + (data[ch].length - 2 - i);
       }
@@ -308,7 +317,9 @@ void mousePressed() {
       return;
     }
     if (dist(mouseX, mouseY, centerX + 40, py) < pinRadius) {
-      handlePinClick(16 - i);
+      //handlePinClick(16 - i);
+      println("i=" + i);
+      handlePinClick(i+9);
       return;
     }
   }
@@ -331,8 +342,9 @@ if (showContextMenu && mouseButton == LEFT) {
 
       // Execute based on menuOptions[i]
       println("Action: " + menuOptions[i] + " on pin " + contextPin);
+      println("/wb" + pinMap[contextPin - 1] );
 
-      if (menuOptions[i].equals("Blink")) {
+      if (menuOptions[i].equals("Blink 160Ω")) {
         if (myPort != null) myPort.write("/wb" + pinMap[contextPin - 1] + "\n");
       }
 
