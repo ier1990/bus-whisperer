@@ -27,7 +27,11 @@ int[] pinMap10k = {
 boolean showContextMenu = false;
 int contextPin = -1;
 int contextX, contextY;
-String[] menuOptions = { "Blink 160Ω", "Pulse High", "Set as Input", "Set as Output", "Label as..." };
+String[] menuOptions = { "Blink 160Ω", "Pull Low 160Ω", "Pull High 160Ω", "Pull Low 10kΩ", "Pull High 10kΩ"
+, "Input 160Ω", "Input 10kΩ"
+, "Output 160Ω", "Output 10kΩ"
+, "Reset"
+};
 
 
 
@@ -151,7 +155,7 @@ void drawTerminal() {
 
   fill(255);
   textAlign(LEFT, TOP);
-  textSize(12);
+  textSize(8);
 
   for (int i = 0; i < terminalLines.size(); i++) {
     text(terminalLines.get(i), 10, terminalTopY + 10 + i * 14);
@@ -349,7 +353,45 @@ if (showContextMenu && mouseButton == LEFT) {
       }
 
       // TODO: handle other cases...
+      if (menuOptions[i].equals("Pull Low 160Ω")) {
+        if (myPort != null) myPort.write("/wl" + pinMap[contextPin - 1] + "\n");
+      }      
+      if (menuOptions[i].equals("Pull High 160Ω")) {
+        if (myPort != null) myPort.write("/wh" + pinMap[contextPin - 1] + "\n");
+      }      
 
+      if (menuOptions[i].equals("Pull Low 10kΩ")) {
+        if (myPort != null) myPort.write("/wl" + pinMap10k[contextPin - 1] + "\n");
+      }      
+      if (menuOptions[i].equals("Pull High 10kΩ")) {
+        if (myPort != null) myPort.write("/wh" + pinMap10k[contextPin - 1] + "\n");
+      }      
+
+      if (menuOptions[i].equals("Input 160Ω")) {
+        if (myPort != null) myPort.write("/wi" + pinMap[contextPin - 1] + "\n");
+      }      
+      if (menuOptions[i].equals("Input 10kΩ")) {
+        if (myPort != null) myPort.write("/wi" + pinMap10k[contextPin - 1] + "\n");
+      }      
+
+
+      if (menuOptions[i].equals("Out 160Ω")) {
+        if (myPort != null) myPort.write("/wo" + pinMap[contextPin - 1] + "\n");
+      }      
+      if (menuOptions[i].equals("Output 10kΩ")) {
+        if (myPort != null) myPort.write("/wo" + pinMap10k[contextPin - 1] + "\n");
+      }      
+
+
+
+
+
+
+
+      if (menuOptions[i].equals("Reset")) {
+        if (myPort != null) myPort.write("/reset " + pinMap10k[contextPin - 1] + "\n");
+      }  
+      
       showContextMenu = false;  // hide after click
       break;
     }
