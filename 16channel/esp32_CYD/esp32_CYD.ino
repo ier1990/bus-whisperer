@@ -34,8 +34,6 @@
 #include <Wire.h>
 #define I2C_SDA 22
 #define I2C_SCL 27
-#include <SparkFun_I2C_Mux_Arduino_Library.h> //Click here to get the library: http://librarymanager/All#SparkFun_I2C_Mux
-QWIICMUX myMux;
 
 #include "Arduino.h"
 
